@@ -3,12 +3,47 @@ version: '3.7'
 volumes:
     prometheus_data: {}
     grafana_data: {}
+    loki_data: {}
 
 networks:
   front-tier:
   back-tier:
 
 services:
+  telegram:
+    build:
+      context: ../telegram-react
+      dockerfile: Dockerfile
+    ports:
+      - 8081:80
+    networks:
+      - front-tier
+      - back-tier
+    restart: always
+    depends_on:
+      - prometheus
+      - loki
+    logging:
+      driver: loki
+      options:
+        loki-url: http://loki:3100/loki/api/v1/push
+        loki-external-labels: job=dockerlogs
+        mode: non-blocking
+        max-buffer-size: 4m
+        loki-retries: "3"
+
+  loki:
+   image: grafana/loki:2.0.0
+   volumes:
+     - ./loki/config.yml:/etc/config/config.yaml
+     - loki_data:/loki
+   command:
+     - '--config.file=/etc/config/config.yaml'
+   ports:
+   - 3100:3100
+   networks:
+   - back-tier
+   restart: always
 
   prometheus:
     image: prom/prometheus:v2.36.2
@@ -94,6 +129,7 @@ services:
     user: "472"
     depends_on:
       - prometheus
+      - loki
     ports:
       - 3000:3000
     volumes:

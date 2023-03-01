@@ -5,6 +5,7 @@ apiVersion: 1
 deleteDatasources:
   - name: Prometheus
     orgId: 1
+  - name: loki
 
 # list of datasources to insert/update depending
 # whats available in the database
@@ -48,3 +49,12 @@ datasources:
   version: 1
   # <bool> allow users to edit datasources from the UI.
   editable: true
+- name: loki
+  type: loki
+  access: proxy
+  orgId: 1
+  url: http://loki:3100
+  basicAuth: false
+  isDefault: false
+  version: 1
+  editable: false
